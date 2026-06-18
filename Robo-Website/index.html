@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROBO Control Center</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007aff">
+<script>
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("service-worker.js");
+    }
+</script>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+
+<body>
+
+<!-- ============================================================
+     BLOCK A — ONBOARDING WRAPPER
+     ============================================================ -->
+<div id="onboarding">
+
+    <!-- ============================================================
+         BLOCK A1 — LANGUAGE SELECTION
+         ============================================================ -->
+    <section class="onb-step" id="step-language">
+        <h1 data-i18n="onb_language_title">Sprache auswählen</h1>
+        <p data-i18n="onb_language_desc">Wähle die Hauptsprache für deinen ROBO.</p>
+
+        <select id="onb-language" onchange="onLanguageChange()">
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="it">Italiano</option>
+        </select>
+
+        <div class="onb-actions">
+            <button class="btn ghost" onclick="skipOnboarding()" data-i18n="onb_skip">Überspringen</button>
+            <button class="btn primary disabled" id="btn-language-next"
+                    onclick="nextStep('step-language','step-wakeword')" data-i18n="onb_next">
+                Weiter
+            </button>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         BLOCK A2 — WAKEWORD SETUP
+         ============================================================ -->
+    <section class="onb-step" id="step-wakeword">
+        <h1 data-i18n="onb_wake_title">Wakeword festlegen</h1>
+        <p data-i18n="onb_wake_desc">Wie soll ROBO auf dich hören?</p>
+
+        <input id="onb-wakeword" placeholder="z.B. Robo, Buddy, Kira" oninput="validateWakeOnb()">
+
+        <div class="onb-actions">
+            <button class="btn ghost" onclick="skipOnboarding()" data-i18n="onb_skip">Überspringen</button>
+            <button class="btn primary disabled" id="btn-wake-next"
+                    onclick="nextStep('step-wakeword','step-pair')" data-i18n="onb_next">
+                Weiter
+            </button>
+        </div>
+    </section>
+
+    <!-- ============================================================
+         BLOCK A3 — PAIRING
+         ============================================================ -->
+    <section class="onb-step" id="step-pair">
+        <h1 data-i18n="onb_pair_title">Gerät koppeln</h1>
+        <p data-i18n="onb_pair_desc">Verbinde dein Smartphone mit ROBO, um alle Funktionen freizuschalten.</p>
+
+        <div class="onb-actions">
+            <button class="btn ghost" onclick="skipOnboarding()" data-i18n="onb_skip">Überspringen</button>
+            <button class="btn primary" onclick="finishSetup()" data-i18n="onb_finish">
+                Koppeln & Setup abschließen
+            </button>
+        </div>
+    </section>
+
+</div>
+
+<!-- ============================================================
+     BLOCK B — MAIN APP WRAPPER
+     ============================================================ -->
+<div id="app">
+
+    <!-- ============================================================
+         BLOCK B1 — TOP NAVIGATION
+         ============================================================ -->
+    <nav id="topnav">
+        <div class="nav-left">
+            <span class="logo-dot"></span>
+            <span class="logo-text">ROBO Control</span>
+        </div>
+        <div class="nav-right">
+            <button id="nav-home" onclick="showPage('home')" class="active" data-i18n="tab_home">Home</button>
+            <button id="nav-control" onclick="showPage('control')" data-i18n="tab_control">Steuerung</button>
+            <button id="nav-settings" onclick="showPage('settings')" data-i18n="tab_settings">Settings</button>
+        </div>
+    </nav>
+
+    <!-- ============================================================
+         BLOCK B2 — MAIN CONTENT
+         ============================================================ -->
+    <main>
+
+        <!-- ============================================================
+             BLOCK C — HOME PAGE
+             ============================================================ -->
+        <section class="page" id="page-home">
+            <div class="home-header">
+                <h1 data-i18n="home_title">Willkommen</h1>
+            </div>
+
+            <!-- QUICK SETTINGS CARD -->
+            <div class="card big">
+                <h3 data-i18n="home_quick_settings">Schnelle Einstellungen</h3>
+
+                <div class="setting-row">
+                    <span data-i18n="home_lang">Sprache</span>
+                    <select id="home-language-select" onchange="changeLanguageFromHome()">
+                        <option value="de">Deutsch</option>
+                        <option value="en">English</option>
+                        <option value="es">Español</option>
+                        <option value="fr">Français</option>
+                        <option value="it">Italiano</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <span data-i18n="home_wake">Wakeword</span>
+                    <span id="home-wakeword">–</span>
+                </div>
+
+                <div class="setting-row">
+                    <span data-i18n="home_whatsapp">WhatsApp Zugriff</span>
+                    <span id="home-whatsapp">–</span>
+                </div>
+            </div>
+
+            <!-- DIRECT EDIT CARD -->
+            <div class="card big">
+                <h3 data-i18n="home_edit">Direkt bearbeiten</h3>
+                <div class="home-actions">
+                    <button class="btn secondary" onclick="showPage('settings')" data-i18n="home_go_settings">
+                        Zu Settings
+                    </button>
+                    <button class="btn secondary" onclick="showPage('control')" data-i18n="home_go_control">
+                        Zu Steuerung
+                    </button>
+                </div>
+            </div>
+
+            <div id="saveMessage" class="save-message"></div>
+        </section>
+
+        <!-- ============================================================
+             BLOCK D — CONTROL PAGE
+             ============================================================ -->
+        <section class="page" id="page-control">
+            <div class="card big">
+                <h2 data-i18n="control_title">Steuerung</h2>
+
+                <div class="setting-row">
+                    <span data-i18n="control_whatsapp">WhatsApp Zugriff</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-whatsapp" onchange="toggleWhatsApp()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <span data-i18n="control_calls">Anrufe erlauben</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-calls" onchange="saveToggle('calls')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <span data-i18n="control_music">Musiksteuerung</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-music" onchange="saveToggle('music')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <span data-i18n="control_apps">Apps öffnen</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-apps" onchange="saveToggle('apps')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <span data-i18n="control_camera">Kamera Zugriff</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-camera" onchange="saveToggle('camera')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <span data-i18n="control_mic">Mikrofon Zugriff</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-mic" onchange="saveToggle('mic')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <span data-i18n="control_notify">Benachrichtigungen</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-notify" onchange="saveToggle('notify')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <span data-i18n="control_kids">Kinder‑Modus</span>
+                    <label class="switch">
+                        <input type="checkbox" id="toggle-kids" onchange="saveToggle('kids')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================
+             BLOCK E — SETTINGS PAGE
+             ============================================================ -->
+        <section class="page" id="page-settings">
+
+            <!-- LANGUAGE VOICE -->
+            <div class="card big">
+                <h2 data-i18n="settings_lang_title">Sprache</h2>
+                <select id="voiceSelect" onchange="saveVoice()">
+                    <option value="de-male">Deutsch – Männlich</option>
+                    <option value="de-female">Deutsch – Weiblich</option>
+                    <option value="en-male">English – Male</option>
+                    <option value="en-female">English – Female</option>
+                    <option value="es-male">Español – Masculino</option>
+                    <option value="fr-male">Français – Masculin</option>
+                </select>
+            </div>
+
+            <!-- WAKEWORD -->
+            <div class="card big">
+                <h2 data-i18n="settings_wake_title">Wakeword</h2>
+                <input id="customWake" placeholder="Wakeword ändern" oninput="onChangeWake()">
+                <button class="btn primary hidden" id="btn-save-wake" onclick="saveWakeword()"
+                        data-i18n="settings_save">
+                    Speichern
+                </button>
+            </div>
+
+            <!-- RGB SETTINGS -->
+            <div class="card big">
+                <h2 data-i18n="settings_rgb_title">RGB Beleuchtung</h2>
+
+                <div class="setting-row">
+                    <span data-i18n="settings_rgb_mode">Modus</span>
+                    <select id="rgbMode" onchange="updateRGBMode()">
+                        <option value="single">Single Color</option>
+                        <option value="multi">Multi Color</option>
+                    </select>
+                </div>
+
+                <div class="rgb-presets">
+                    <button class="preset" onclick="setPreset('warm')">Warm</button>
+                    <button class="preset" onclick="setPreset('cool')">Cool</button>
+                    <button class="preset" onclick="setPreset('sunset')">Sunset</button>
+                    <button class="preset" onclick="setPreset('neon')">Neon</button>
+                </div>
+
+                <!-- ============================================================
+                     BLOCK E1 — RGB COLOR PICKERS WITH ENABLE BUTTONS
+                     ============================================================ -->
+                <div class="rgb-row">
+
+                    <div class="rgb-col">
+                        <label>
+                            <input type="checkbox" id="enable1" checked onchange="updateRGBPreview()">
+                            Color 1
+                        </label>
+                        <input type="color" id="color1" onchange="updateRGBPreview()">
+                        <div class="quick-colors"></div>
+                    </div>
+
+                    <div class="rgb-col">
+                        <label>
+                            <input type="checkbox" id="enable2" onchange="updateRGBPreview()">
+                            Color 2
+                        </label>
+                        <input type="color" id="color2" onchange="updateRGBPreview()">
+                        <div class="quick-colors"></div>
+                    </div>
+
+                    <div class="rgb-col">
+                        <label>
+                            <input type="checkbox" id="enable3" onchange="updateRGBPreview()">
+                            Color 3
+                        </label>
+                        <input type="color" id="color3" onchange="updateRGBPreview()">
+                        <div class="quick-colors"></div>
+                    </div>
+
+                </div>
+
+                <label data-i18n="settings_rgb_effect">Effekt</label>
+                <select id="rgbEffect" onchange="updateRGBPreview()">
+                    <option value="static">Static</option>
+                    <option value="morph">Smooth Morph</option>
+                    <option value="pulse">Pulse</option>
+                    <option value="breathe">Breathe</option>
+                    <option value="rainbow">Rainbow</option>
+                </select>
+
+                <div id="rgbPreview">
+                    <span data-i18n="settings_rgb_preview">Vorschau</span>
+                </div>
+
+                <button class="btn primary hidden" id="btn-save-rgb" onclick="saveRGB()"
+                        data-i18n="settings_save">
+                    RGB Einstellungen speichern
+                </button>
+            </div>
+
+            <div id="saveMessageSettings" class="save-message"></div>
+        </section>
+
+    </main>
+
+</div>
+
+<!-- ============================================================
+     BLOCK Z — SCRIPT
+     ============================================================ -->
+<script src="script.js"></script>
+
+</body>
+</html>
